@@ -36,9 +36,9 @@ impl<'a> System<'a> for DummySystem
 
     fn run(&mut self, data: Self::SystemData) {
       if self.counter < 10 {
-        let (mut world) = data;
+        let (mut physics_world) = data;
 
-        let mut world = &mut (world.0).0;
+        let mut physics_world = &mut (physics_world.0).0;
         use na::{Isometry2, Point2, Vector2};
         use ncollide2d::shape::{Cuboid, ShapeHandle};
         use nphysics2d::object::{BodyHandle, Material};
@@ -49,7 +49,7 @@ impl<'a> System<'a> for DummySystem
         let cuboid = ShapeHandle::new(Cuboid::new(Vector2::new(1.0, 2.0)));
         let local_inertia = cuboid.inertia(1.0);
         let local_center_of_mass = cuboid.center_of_mass();
-        let rigid_body_handle = world.add_rigid_body(
+        let rigid_body_handle = physics_world.add_rigid_body(
             Isometry2::new(Vector2::x() * 2.0, na::zero()),
             local_inertia,
             local_center_of_mass,
