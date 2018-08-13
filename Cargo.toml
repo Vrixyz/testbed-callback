@@ -1,0 +1,10 @@
+[package]
+name = "testbed_callback"
+version = "0.1.0"
+authors = ["Vrixyz <tom.kahl@hotmail.fr>"]
+
+[dependencies]
+nalgebra = "0.16"
+ncollide2d = "0.17"
+nphysics2d = "*"
+nphysics_testbed2d = "*"
