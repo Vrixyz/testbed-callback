@@ -1,4 +1,5 @@
 #![feature(pattern_parentheses)]
+#![feature(generic_associated_types)]
 
 extern crate nalgebra as na;
 extern crate ncollide2d;
@@ -10,12 +11,12 @@ use nphysics_testbed2d::Testbed;
 use specs::prelude::*;
 
 //struct PhysicsWorld(std::cell::RefCell<nphysics2d::world::World<f32>>);
-struct PhysicsWorld(nphysics2d::world::World<f32>);
+struct PhysicsWorld<'a>(Option<&'a mut nphysics2d::world::World<f32>>);
 
-impl Default for PhysicsWorld {
-    fn default() -> PhysicsWorld {
+impl<'a> Default for PhysicsWorld<'a> {
+    fn default() -> PhysicsWorld<'a> {
         //PhysicsWorld(std::cell::RefCell::new(nphysics2d::world::World::new()))
-        PhysicsWorld(nphysics2d::world::World::new())
+        PhysicsWorld(None)
     }
 }
 
@@ -28,14 +29,14 @@ impl DummySystem {
         DummySystem { counter: 0 }
     }
 }
-impl<'a> System<'a> for DummySystem {
-    type SystemData = (Write<'a, PhysicsWorld>,);
+impl<'a, 'b> System<'a> for DummySystem {
+    type SystemData<'b> = (Write<'a, PhysicsWorld<'b>>,);
 
     fn run(&mut self, data: Self::SystemData) {
         if self.counter < 10 {
             let (mut physics_world) = data;
 
-            let physics_world = &mut (physics_world.0).0;
+            let mut physics_world = &mut (physics_world.0).0.unwrap();
             use na::{Isometry2, Vector2};
             use ncollide2d::shape::{Cuboid, ShapeHandle};
             use nphysics2d::volumetric::Volumetric;
@@ -64,7 +65,7 @@ fn main() {
     let ecs_world = std::cell::RefCell::new(specs::World::new());
     ecs_world
         .borrow_mut()
-        .add_resource(PhysicsWorld(physics_world));
+        .add_resource(PhysicsWorld(Some(&mut physics_world)));
     let dispatcher = DispatcherBuilder::new()
         .with(DummySystem::new(), "dummy_system", &[])
         .build();
