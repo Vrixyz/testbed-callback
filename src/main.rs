@@ -8,14 +8,20 @@ extern crate specs;
 
 use nphysics_testbed2d::Testbed;
 use specs::prelude::*;
+use std::sync::Arc;
+use std::sync::Mutex;
+            use na::{Isometry2, Vector2};
+            use ncollide2d::shape::{Ball, Cuboid, ShapeHandle};
+            use nphysics2d::volumetric::Volumetric;
+use nphysics2d::object::{BodyHandle, Material};
 
 //struct PhysicsWorld(std::cell::RefCell<nphysics2d::world::World<f32>>);
-struct PhysicsWorld(nphysics2d::world::World<f32>);
+struct PhysicsWorld(Arc<Mutex<nphysics2d::world::World<f32>>>);
 
 impl Default for PhysicsWorld {
     fn default() -> PhysicsWorld {
         //PhysicsWorld(std::cell::RefCell::new(nphysics2d::world::World::new()))
-        PhysicsWorld(nphysics2d::world::World::new())
+        PhysicsWorld(Arc::new(Mutex::new(nphysics2d::world::World::new())))
     }
 }
 
@@ -35,10 +41,8 @@ impl<'a> System<'a> for DummySystem {
         if self.counter < 10 {
             let (mut physics_world) = data;
 
-            let physics_world = &mut (physics_world.0).0;
-            use na::{Isometry2, Vector2};
-            use ncollide2d::shape::{Cuboid, ShapeHandle};
-            use nphysics2d::volumetric::Volumetric;
+            let physics_world = &mut (physics_world.0).0.lock().unwrap();
+
 
             // Adapted from http://nphysics.org/rigid_body_simulations_with_contacts/ and some demo examples.
             // If something shorter exists, please share
@@ -56,15 +60,58 @@ impl<'a> System<'a> for DummySystem {
     }
 }
 
+const COLLIDER_MARGIN: f32 = 0.01;
+
 fn main() {
     // nphysics initialization
-    let physics_world = nphysics2d::world::World::new();
+    let physics_world = Arc::new(Mutex::new(nphysics2d::world::World::new()));
+
+
+    // Materials.
+    let material = Material::default();
+    
+/*
+     * Create the boxes
+     */
+    let num = 25;
+    let rad = 0.1;
+    let shift = rad * 2.0 + 0.002;
+    let centerx = shift * (num as f32) / 2.0;
+    let centery = shift / 2.0;
+
+    let geom = ShapeHandle::new(Ball::new(rad - COLLIDER_MARGIN));
+    let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
+
+    for i in 0usize..num {
+        for j in 0..num {
+            let x = i as f32 * shift - centerx;
+            let y = j as f32 * shift + centery;
+
+            /*
+             * Create the rigid body.
+             */
+            let pos = Isometry2::new(Vector2::new(x, y), 0.0);
+            let handle = physics_world.lock().unwrap().add_rigid_body(pos, inertia, center_of_mass);
+
+            /*
+             * Create the collider.
+             */
+            physics_world.lock().unwrap().add_collider(
+                COLLIDER_MARGIN,
+                geom.clone(),
+                handle,
+                Isometry2::identity(),
+                material.clone(),
+            );
+        }
+    }
 
     // Specs initialization
     let ecs_world = std::cell::RefCell::new(specs::World::new());
     ecs_world
         .borrow_mut()
-        .add_resource(PhysicsWorld(physics_world));
+        .add_resource(PhysicsWorld(physics_world.clone()));
     let dispatcher = DispatcherBuilder::new()
         .with(DummySystem::new(), "dummy_system", &[])
         .build();
@@ -74,9 +121,9 @@ fn main() {
     // Testbed initialization
     let mut testbed = Testbed::new(
         // FIXME: This cannot compile because it's moved into PhysicsWorld resource.
-        physics_world,
+        physics_world.clone(),
     );
-    testbed.add_callback(move |_, _, _| {
+    testbed.add_callback(move |_, _| {
         let mut ecs_world = ecs_world.borrow_mut();
         dispatcher.borrow_mut().dispatch(&ecs_world.res);
         ecs_world.maintain();
