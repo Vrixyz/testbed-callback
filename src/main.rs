@@ -34,25 +34,38 @@ impl DummySystem {
         DummySystem { counter: 0 }
     }
 }
+
+const COLLIDER_MARGIN: f32 = 0.01;
+
 impl<'a> System<'a> for DummySystem {
     type SystemData = (Write<'a, PhysicsWorld>,);
 
     fn run(&mut self, data: Self::SystemData) {
         if self.counter < 10 {
+
+    let material = Material::default();
+                let geom = ShapeHandle::new(Ball::new(0.09));
+    let inertia = geom.inertia(1.0);
+    let center_of_mass = geom.center_of_mass();
+
             let (mut physics_world) = data;
 
             let physics_world = &mut (physics_world.0).0.lock().unwrap();
+            /*
+             * Create the rigid body.
+             */
+            let pos = Isometry2::new(Vector2::new(0.0, 0.0), 0.0);
+            let handle = physics_world.add_rigid_body(pos, inertia, center_of_mass);
 
-
-            // Adapted from http://nphysics.org/rigid_body_simulations_with_contacts/ and some demo examples.
-            // If something shorter exists, please share
-            let cuboid = ShapeHandle::new(Cuboid::new(Vector2::new(1.0, 2.0)));
-            let local_inertia = cuboid.inertia(1.0);
-            let local_center_of_mass = cuboid.center_of_mass();
-            physics_world.add_rigid_body(
-                Isometry2::new(Vector2::x() * 2.0, na::zero()),
-                local_inertia,
-                local_center_of_mass,
+            /*
+             * Create the collider.
+             */
+            physics_world.add_collider(
+                COLLIDER_MARGIN,
+                geom.clone(),
+                handle,
+                Isometry2::identity(),
+                material.clone(),
             );
             self.counter += 1;
         }
@@ -60,7 +73,6 @@ impl<'a> System<'a> for DummySystem {
     }
 }
 
-const COLLIDER_MARGIN: f32 = 0.01;
 
 fn main() {
     // nphysics initialization
