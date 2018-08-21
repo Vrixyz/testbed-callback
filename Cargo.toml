@@ -6,6 +6,9 @@ authors = ["Vrixyz <tom.kahl@hotmail.fr>"]
 [dependencies]
 nalgebra = "0.16"
 ncollide2d = "0.17"
-nphysics2d = { git = "https://github.com/Vrixyz/nphysics", branch = "131-refcell-world" }
-nphysics_testbed2d = { git = "https://github.com/Vrixyz/nphysics", branch = "131-refcell-world" }
+nphysics2d = { git = "https://github.com/Vrixyz/nphysics", branch = "131-testbed-world-owner" }
+nphysics_testbed2d = { git = "https://github.com/Vrixyz/nphysics", branch = "131-testbed-world-owner" }
+# nphysics2d = { path = "../nphysics/build/nphysics2d" }
+# nphysics_testbed2d = { path = "../nphysics/nphysics_testbed2d" }
+
 specs = "0.12.1"
