@@ -130,11 +130,11 @@ fn main() {
     let dispatcher = std::cell::RefCell::new(dispatcher);
 
     // Testbed initialization
-    let mut testbed = Testbed::new(
+    let mut testbed = Testbed::new_with_world_owner(
         // FIXME: This cannot compile because it's moved into PhysicsWorld resource.
         Box::new(physics_world.clone().0),
     );
-    testbed.add_callback(move |_, _| {
+    testbed.add_callback(move |_, _, _| {
         let mut ecs_world = ecs_world.borrow_mut();
         dispatcher.borrow_mut().dispatch(&ecs_world.res);
         ecs_world.maintain();
