@@ -81,7 +81,7 @@ fn main() {
     // Materials.
     let material = Material::default();
     
-/*
+    /*
      * Create the boxes
      */
     let num = 25;
