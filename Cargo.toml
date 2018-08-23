@@ -3,9 +3,19 @@ name = "testbed_callback"
 version = "0.1.0"
 authors = ["Vrixyz <tom.kahl@hotmail.fr>"]
 
+[[bin]]
+name = "dispatcher"
+path = "./bin/dispatcher.rs"
+
+[[bin]]
+name = "no_dispatcher"
+path = "./bin/no_dispatcher.rs"
+
 [dependencies]
 nalgebra = "0.16"
 ncollide2d = "0.17"
-nphysics2d = "*"
-nphysics_testbed2d = "*"
+#nphysics2d = { git = "https://github.com/Vrixyz/nphysics", branch = "131-testbed-world-owner" }
+#nphysics_testbed2d = { git = "https://github.com/Vrixyz/nphysics", branch = "131-testbed-world-owner" }
+ nphysics2d = { path = "../nphysics/build/nphysics2d" }
+ nphysics_testbed2d = { path = "../nphysics/nphysics_testbed2d" }
 specs = "0.12.1"
